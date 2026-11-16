@@ -34,3 +34,39 @@ def adicionar_transacao(tipo: str, categoria: str, valor: float, descricao: str 
     conn.commit()
     conn.close()
     return {"sucesso": f"{tipo} de R$ {valor:.2f} adicionado"}
+
+def listar_transacoes():
+    conn = sqlite3.connect(DB)
+    cur = conn.cursor()
+    # Pega tudo, do mais novo pro mais antigo
+    cur.execute("SELECT id, tipo, categoria, valor, descricao FROM transacoes ORDER BY id DESC")
+    linhas = cur.fetchall()
+    conn.close()
+    # Transforma cada linha em dicionário, pra ficar fácil de ler
+    resultado = []
+    for id, tipo, categoria, valor, descricao in linhas:
+        resultado.append({
+            "id": id,
+            "tipo": tipo,
+            "categoria": categoria,
+            "valor": valor,
+            "descricao": descricao
+        })
+    return resultado
+
+def calcular_saldo():
+    conn = sqlite3.connect(DB)
+    cur = conn.cursor()
+    # Soma tudo que é receita
+    cur.execute("SELECT SUM(valor) FROM transacoes WHERE tipo = 'receita'")
+    total_receitas = cur.fetchone()[0] or 0
+    # Soma tudo que é despesa
+    cur.execute("SELECT SUM(valor) FROM transacoes WHERE tipo = 'despesa'")
+    total_despesas = cur.fetchone()[0] or 0
+    conn.close()
+    saldo = total_receitas - total_despesas
+    return {
+        "receitas": total_receitas,
+        "despesas": total_despesas,
+        "saldo": saldo
+    }   
